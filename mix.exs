@@ -3,7 +3,7 @@ defmodule Explot.Mixfile do
 
   def project do
     [app: :explot,
-     version: "0.1.0",
+     version: "0.1.1",
      elixir: "~> 1.3",
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
@@ -22,7 +22,7 @@ defmodule Explot.Mixfile do
 
   defp package do
     [files: ["lib", "mix.exs", "README.md", "LICENSE"],
-     maintainers: ["Jordi Polo Carres"],
+     maintainers: ["Jordi Polo Carres", "Agro Rachmatullah"],
      licenses: ["Apache 2.0"],
      links: %{"GitHub" => "https://github.com/jordipolo/explot"}]
   end

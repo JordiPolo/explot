@@ -53,6 +53,27 @@ Will show the following plot:
 
 ![](readme_example.png)
 
+Another example:
+```elixir
+{xs, ys} = -4..4
+|> Enum.map(& {&1, &1 * &1})
+|> Enum.unzip()
+
+plot = Explot.new()
+Explot.Style.use(plot, "seaborn-pastel")
+Explot.title(plot, "A humble plot")
+Explot.xlabel(plot, "x values")
+Explot.ylabel(plot, "y values")
+Explot.plot(plot, xs, ys, linestyle: "-.", label: "y = x^2")
+Explot.axis(plot, "equal")
+Explot.grid(plot, true)
+Explot.legend(plot)
+Explot.show_pure(plot)
+```
+
+Will show the following:
+
+![](readme_example_2.png)
 
 ## Development
 
