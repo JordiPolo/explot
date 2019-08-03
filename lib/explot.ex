@@ -1,5 +1,5 @@
 defmodule Explot do
-  @docmodule """
+  @moduledoc """
   The main module of this package. It provides an easy way to use Python's Matplotlib.
   It allows to send arbitrary commands to be interpreted by Python.
   It also provides functions to make it easy to use the most common functionality of Matplotlib.
@@ -62,16 +62,86 @@ for line in sys.stdin:
     labels_to_print = to_python_array(labels_available)
     plot_command(agent, "xticks(#{to_python_array(array_of_indexes)}, #{labels_to_print})") #, rotation=60)")
   end
+  
+  @doc """
+    Draws a line plot. `xs` is an array of x coordinates, for example `[1.0, 1.5, 2.0]`.
+    `ys` is an array of y coordinates.
+  """
+  def plot(agent, xs, ys, opts \\ []) do
+    xs_str = numbers_to_python_array(xs)
+    ys_str = numbers_to_python_array(ys)
+    opts_str = opts_to_string(opts)
+    plot_command(agent, "plot(#{xs_str}, #{ys_str}#{opts_str})")
+  end
+
+  @doc """
+    Draws a scatter plot. `xs` is an array of x coordinates, for example `[1.0, 1.5, 2.0]`.
+    `ys` is an array of y coordinates.
+  """
+  def scatter(agent, xs, ys, opts \\ []) do
+    xs_str = numbers_to_python_array(xs)
+    ys_str = numbers_to_python_array(ys)
+    opts_str = opts_to_string(opts)
+    plot_command(agent, "scatter(#{xs_str}, #{ys_str}#{opts_str})")
+  end
+  
+  @doc """
+    Encodes optional arguments.
+  """
+  def opts_to_string([]), do: ""
+  def opts_to_string(opts) do
+    "," <> (opts
+    |> Enum.map(fn {key, value} -> opt_to_string(key, value) end)
+    |> Enum.join(", "))
+  end
+  
+  @doc """
+    Encodes a single optional argument.
+  """
+  def opt_to_string(key, value) do
+    "#{key}=#{to_python value}"
+  end
+
+  @doc """
+    Shows the legend.
+  """
+  def legend(agent) do
+    plot_command(agent, "legend()")
+  end
+
+  @doc """
+    Changes the axis.
+  """
+  def axis(agent, desc) do
+    plot_command(agent, "axis(#{to_python desc})")
+  end
+
+  @doc """
+    Toggles the grid.
+  """
+  def grid(agent, is_show) do
+    plot_command(agent, "grid(#{to_python is_show})")
+  end
 
   @doc """
     Shows the plot and kills the agent.
   """
-  def show(agent) do
-    plot_command(agent, "grid(True)")
-    plot_command(agent, "legend()")
+  def show(agent, opts \\ [pure: false]) do
+    if opts[:pure] == false do
+      grid(agent, true)
+      legend(agent)
+    end
+    
     plot_command(agent, "show()")
     Port.close(port(agent))
     Agent.stop(agent, :normal)
+  end
+
+  @doc """
+    Shows the plot without specifically turning on grids and legends, then kills the agent.
+  """
+  def show_pure(agent) do
+    show(agent, pure: true)
   end
 
   @doc """
@@ -91,6 +161,30 @@ for line in sys.stdin:
   defp port(agent) do
     Agent.get(agent, &Map.get(&1, :port))
   end
+  
+  @doc """
+    Encodes an array of numbers.
+  """
+  def numbers_to_python_array(objs) do
+    inspect objs, charlists: :as_lists, limit: :infinity
+  end
+
+  @doc """
+    Encodes various data types to Python.
+  """
+  def to_python(true), do: "True"
+  def to_python(false), do: "False"
+  
+  def to_python(str) when is_binary(str) do
+    str = String.replace(str, "\\", "\\\\")
+    str = String.replace(str, "\"", "\\\"")
+    str = String.replace(str, "\r", "\\r")
+    str = String.replace(str, "\n", "\\n")
+    str = String.replace(str, "\t", "\\t")
+    "\"#{str}\""
+  end
+  
+  def to_python(any), do: "#{any}"
 
   defp to_python_array([h | t]) when is_number(h) do
     comma_separated = [h | t] |> Enum.join(", ")
@@ -111,7 +205,7 @@ for line in sys.stdin:
   defp limit_indexes(array) do
     divisor = Enum.max([round(Float.floor(length(array) /10)), 1])
     data = Enum.take_every(array, divisor)
-    indexes = Enum.take_every(Enum.to_list(0..length(array) -1), divisor)
+    indexes = Enum.take_every(Enum.to_list((0..length(array)) - 1), divisor)
     {data, indexes}
   end
 
